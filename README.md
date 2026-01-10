@@ -39,12 +39,55 @@ Two modes: instant rule-based or intelligent semantic grouping.
 
 | Feature | Description |
 |---------|-------------|
+| **Prompt Guard** | **Protects your prompts from being sent to Claude's API** - auto-detects and redacts prompt content |
 | **Chat Panel** | Draggable, resizable window integrated into ComfyUI |
 | **Workflow Awareness** | Claude sees your nodes, connections, groups, and settings |
 | **36 Agent Tools** | Full control: create, modify, connect, organize, analyze |
 | **Batch Operations** | Complex multi-step changes in one command |
 | **Max Plan Support** | Use your Claude Max subscription (no per-token charges!) |
 | **API Fallback** | Works with Anthropic API key if you don't have Max plan |
+
+---
+
+## Prompt Guard - Protect Your Prompts
+
+**Your prompts are valuable.** Prompt Guard ensures your creative prompts never leave your machine when chatting with Claude.
+
+### How It Works
+
+Prompt Guard automatically detects nodes containing prompt text and **redacts their content** before sending workflow context to Claude. Claude sees the node structure and connections, but not your actual prompt text.
+
+### Intelligent Detection
+
+Prompt Guard uses multiple detection strategies:
+
+| Method | What It Detects |
+|--------|-----------------|
+| **Node Type** | CLIPTextEncode, Note, PrimitiveNode, and other known prompt nodes |
+| **Widget Names** | Widgets named "text", "prompt", "positive", "negative", etc. |
+| **Text Patterns** | Long text, comma-separated tags, weighted syntax `(word:1.5)` |
+| **Semantic Content** | Quality boosters, negative prompt terms, style descriptors |
+| **Connection Flow** | Nodes feeding into sampler conditioning inputs |
+| **Special Syntax** | LoRA triggers `<lora:...>`, embeddings, wildcards, BREAK |
+
+### Manual Control
+
+- **Auto-detection enabled by default** - most prompt nodes found automatically
+- **Add protection** to any node manually via right-click menu
+- **Remove protection** from false positives
+- **Visual indicators** show which nodes are protected
+
+### What Claude Sees
+
+```
+Before Prompt Guard:
+  CLIPTextEncode #5: text="masterpiece, 1girl, blue hair, detailed eyes, ..."
+
+After Prompt Guard:
+  CLIPTextEncode #5: text="[PROTECTED - 847 chars]"
+```
+
+Claude can still help you connect nodes, organize workflows, and troubleshoot - without ever seeing your actual prompts.
 
 ---
 
