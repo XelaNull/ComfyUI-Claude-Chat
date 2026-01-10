@@ -1,0 +1,12 @@
+# ComfyUI Claude Chat - Dependencies
+
+# Claude Code SDK (for Max plan - no API tokens needed)
+# Uncomment if you have Claude Max plan:
+# claude-code-sdk>=0.1.0
+
+# Anthropic API (fallback, requires ANTHROPIC_API_KEY)
+anthropic>=0.39.0
+
+# Async support
+aiohttp>=3.9.0
+aiofiles>=23.0.0
