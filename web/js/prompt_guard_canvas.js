@@ -5,7 +5,8 @@
  * that are protected by Prompt Guard.
  */
 
-import { app } from "../../../../scripts/app.js";
+// ComfyUI API - use new window.comfyAPI pattern (ComfyUI 1.35+)
+const { app } = window.comfyAPI?.app ?? await import("../../../../scripts/app.js");
 import { protectedNodesManager } from "./prompt_guard_manager.js";
 
 // =============================================================================

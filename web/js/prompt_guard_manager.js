@@ -10,7 +10,9 @@
  */
 
 import { promptGuardDetector } from './prompt_guard_detector.js';
-import { app } from "../../../../scripts/app.js";
+
+// ComfyUI API - use new window.comfyAPI pattern (ComfyUI 1.35+)
+const { app } = window.comfyAPI?.app ?? await import("../../../../scripts/app.js");
 
 // =============================================================================
 // Storage Keys

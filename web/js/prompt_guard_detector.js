@@ -12,7 +12,8 @@
  * 5. Metadata Detection (group membership, node titles)
  */
 
-import { app } from "../../../../scripts/app.js";
+// ComfyUI API - use new window.comfyAPI pattern (ComfyUI 1.35+)
+const { app } = window.comfyAPI?.app ?? await import("../../../../scripts/app.js");
 
 // =============================================================================
 // Detection Configuration

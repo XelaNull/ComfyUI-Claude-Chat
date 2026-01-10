@@ -3,7 +3,9 @@
  * Adds a chat panel for interacting with Claude about your workflow.
  */
 
-import { app } from "../../../scripts/app.js";
+// ComfyUI API - use new window.comfyAPI pattern (ComfyUI 1.35+)
+const { app } = window.comfyAPI?.app ?? await import("../../../scripts/app.js");
+
 import { workflowAPI } from "./workflow_api.js";
 import { createPanelDOM } from "./claude_chat_panel.js";
 import { openSettingsModal } from "./claude_chat_settings.js";
@@ -975,8 +977,9 @@ class ClaudeChatPanel {
 
         if (hasMenu) {
             try {
-                // Import ComfyButton dynamically
-                const { ComfyButton } = await import("../../../scripts/ui/components/button.js");
+                // Get ComfyButton from new API or fall back to legacy import
+                const { ComfyButton } = window.comfyAPI?.ui?.components ??
+                    await import("../../../scripts/ui/components/button.js");
 
                 const claudeButton = new ComfyButton({
                     icon: "chat",
