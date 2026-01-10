@@ -70,12 +70,22 @@ Prompt Guard uses multiple detection strategies:
 | **Connection Flow** | Nodes feeding into sampler conditioning inputs |
 | **Special Syntax** | LoRA triggers `<lora:...>`, embeddings, wildcards, BREAK |
 
-### Manual Control
+### You Control What's Protected
 
-- **Auto-detection enabled by default** - most prompt nodes found automatically
-- **Add protection** to any node manually via right-click menu
-- **Remove protection** from false positives
-- **Visual indicators** show which nodes are protected
+Prompt Guard gives you **full control** over which nodes and widgets are protected:
+
+| Action | How |
+|--------|-----|
+| **View protected nodes** | Shield icons appear on protected nodes in the canvas |
+| **Add protection** | Right-click any node → "Protect from Claude" |
+| **Remove protection** | Right-click protected node → "Unprotect" |
+| **Disable auto-detection** | Settings → Prompt Guard → Toggle auto-detect off |
+| **Reset to defaults** | Settings → Prompt Guard → Reset |
+
+- **Auto-detection enabled by default** - intelligently finds prompt nodes
+- **Override any detection** - exclude false positives or add nodes the detector missed
+- **Per-widget control** - protect specific widgets within a node
+- **Persistent preferences** - your choices are saved across sessions
 
 ### What Claude Sees
 
@@ -156,22 +166,23 @@ Use your Max subscription - **no per-token charges!**
 
 ## AI Agent Capabilities
 
-Claude has access to 36 tools organized by function:
+Claude has access to **45 tools** organized by function:
 
 | Category | Tools | Examples |
 |----------|-------|----------|
-| **Node Operations** | 5 | create, delete, duplicate, bypass |
+| **Discovery** | 9 | list/find nodes, search available node types, list models |
+| **Node Operations** | 5 | create, delete, update, duplicate, bypass |
 | **Widget Operations** | 2 | update values, get dropdown options |
 | **Link Operations** | 2 | connect nodes, disconnect |
-| **Group Operations** | 6 | create, merge, reorganize |
-| **Analysis** | 5 | validate workflow, find issues, compare to defaults |
-| **Discovery** | 5 | search node types, get schemas, list models |
-| **High-Level** | 3 | clear, organize, smart layout |
-| **Execution** | 3 | queue, stop, get status |
-| **Utility** | 2 | batch commands, undo |
+| **Group Operations** | 7 | create, delete, update, merge, split, move nodes |
+| **Layout** | 4 | align nodes, distribute, move groups, fit to nodes |
+| **High-Level** | 3 | clear workflow, organize, integrate into groups |
+| **Analysis** | 4 | validate workflow, detect issues, analyze, compare defaults |
+| **Execution** | 3 | queue, cancel, get status |
+| **Utility** | 3 | batch commands, undo, help |
 | **Low-Level** | 3 | raw JSON access for edge cases |
 
-For detailed tool specifications, see [AGENT_TOOLS.md](AGENT_TOOLS.md).
+For detailed tool specifications, see [docs/AGENT_TOOLS](docs/AGENT_TOOLS/README.md).
 
 ---
 

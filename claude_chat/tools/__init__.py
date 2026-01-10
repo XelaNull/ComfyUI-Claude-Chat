@@ -156,4 +156,4 @@ __all__ = [
     'SetWorkflowJsonTool',
 ]
 
-# Tool count: 36 tools total (matches AGENT_TOOLS.md specification)
+# Tool count: 37 Python backend tools + 8 frontend-only tools = 45 total (matches AGENT_TOOLS docs)
