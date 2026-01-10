@@ -44,15 +44,27 @@ from .groups import (
     UpdateGroupTool,
     MoveNodesToGroupTool,
     MergeGroupsTool,
+    SplitGroupTool,
     DetectGroupIssuesTool,
 )
 
 # Discovery tools
 from .discovery import (
-    SearchNodeTypesTool,
+    ListNodesTool,
+    ListAvailableNodesTool,
+    GetContextTool,
+    SearchAvailableNodesTool,
     GetNodeSchemaTool,
     ListAvailableModelsTool,
     SearchAvailableModelsTool,
+)
+
+# Layout tools
+from .layout import (
+    AlignNodesTool,
+    DistributeNodesTool,
+    MoveGroupTool,
+    FitGroupToNodesTool,
 )
 
 # Execution tools
@@ -67,12 +79,14 @@ from .highlevel import (
     OrganizeTool,
     OrganizeLayoutTool,
     ClearWorkflowTool,
+    IntegrateNodeIntoGroupsTool,
 )
 
 # Utility tools
 from .utility import (
     UndoTool,
     BatchTool,
+    HelpTool,
 )
 
 # Analysis tools (Phase 4)
@@ -103,7 +117,7 @@ __all__ = [
     'DuplicateNodeTool',
     'BypassNodeTool',
 
-    # Link operations (2) - renamed
+    # Link operations (2)
     'CreateNodeLinkTool',
     'DeleteNodeLinkTool',
 
@@ -115,45 +129,57 @@ __all__ = [
     'GetWorkflowTool',
     'GetNodeTool',
 
-    # Group operations (6)
+    # Group operations (7)
     'CreateGroupTool',
     'DeleteGroupTool',
     'UpdateGroupTool',
     'MoveNodesToGroupTool',
     'MergeGroupsTool',
+    'SplitGroupTool',
     'DetectGroupIssuesTool',
 
-    # Discovery (4)
-    'SearchNodeTypesTool',
+    # Discovery (7)
+    'ListNodesTool',
+    'ListAvailableNodesTool',
+    'GetContextTool',
+    'SearchAvailableNodesTool',
     'GetNodeSchemaTool',
     'ListAvailableModelsTool',
     'SearchAvailableModelsTool',
+
+    # Layout (4)
+    'AlignNodesTool',
+    'DistributeNodesTool',
+    'MoveGroupTool',
+    'FitGroupToNodesTool',
 
     # Execution (3)
     'QueueExecutionTool',
     'CancelExecutionTool',
     'ExecutionStatusTool',
 
-    # High-level (3)
+    # High-level (4)
     'OrganizeTool',
     'OrganizeLayoutTool',
     'ClearWorkflowTool',
+    'IntegrateNodeIntoGroupsTool',
 
-    # Utility (2)
+    # Utility (3)
     'UndoTool',
     'BatchTool',
+    'HelpTool',
 
-    # Analysis (5) - Phase 4
+    # Analysis (5)
     'FindNodesTool',
     'GetModifiedWidgetsTool',
     'DetectLayoutIssuesTool',
     'ValidateWorkflowTool',
     'AnalyzeWorkflowTool',
 
-    # Low-level (3) - Phase 4
+    # Low-level (3)
     'GetWorkflowJsonTool',
     'PatchWorkflowJsonTool',
     'SetWorkflowJsonTool',
 ]
 
-# Tool count: 37 Python backend tools + 8 frontend-only tools = 45 total (matches AGENT_TOOLS docs)
+# Tool count: 45 Python backend tools (matches AGENT_TOOLS documentation)

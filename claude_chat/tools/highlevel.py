@@ -158,3 +158,40 @@ This action can be undone."""
             "params": {},
             "execute_client_side": True
         }
+
+
+@ToolRegistry.register
+class IntegrateNodeIntoGroupsTool(Tool):
+    """Automatically integrate a node into the existing group structure."""
+
+    name = "integrate_node_into_groups"
+    description = """Automatically integrate a newly added node into existing groups.
+
+CRITICAL: Always call this after adding a node to an organized workflow!
+
+The tool automatically:
+1. Categorizes the node based on its type (Loaders→Setup, LoRA→LoRAs, etc.)
+2. Expands an existing group if one matches the category
+3. Creates a new group if no match exists
+4. Shifts downstream groups to make room
+
+vs move_nodes_to_group:
+- move_nodes_to_group: Manual - you specify which group
+- integrate_node_into_groups: Automatic - tool figures out the right group"""
+
+    parameters = {
+        "type": "object",
+        "properties": {
+            "node_id": {
+                "description": "ID of the node to integrate (number or $ref)"
+            }
+        },
+        "required": ["node_id"]
+    }
+
+    async def execute(self, node_id) -> Dict[str, Any]:
+        return {
+            "action": "integrate_node_into_groups",
+            "params": {"node_id": node_id},
+            "execute_client_side": True
+        }

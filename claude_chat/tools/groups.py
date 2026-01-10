@@ -241,6 +241,54 @@ Source groups are deleted after merging."""
 
 
 @ToolRegistry.register
+class SplitGroupTool(Tool):
+    """Split one group into multiple groups."""
+
+    name = "split_group"
+    description = """Divide one group into multiple groups.
+
+The original group is deleted and new groups are created with the specified nodes.
+Nodes not assigned to any new group become ungrouped."""
+
+    parameters = {
+        "type": "object",
+        "properties": {
+            "split": {
+                "type": "object",
+                "description": "Split configuration",
+                "properties": {
+                    "group": {
+                        "description": "Group to split (index or title)"
+                    },
+                    "into": {
+                        "type": "array",
+                        "description": "New group definitions",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {"type": "string", "description": "New group title"},
+                                "nodes": {"type": "array", "description": "Node IDs for this group"},
+                                "color": {"type": "string", "description": "Hex color (optional)"}
+                            },
+                            "required": ["title", "nodes"]
+                        }
+                    }
+                },
+                "required": ["group", "into"]
+            }
+        },
+        "required": ["split"]
+    }
+
+    async def execute(self, split: Dict) -> Dict[str, Any]:
+        return {
+            "action": "split_group",
+            "params": {"split": split},
+            "execute_client_side": True
+        }
+
+
+@ToolRegistry.register
 class DetectGroupIssuesTool(Tool):
     """Find problems with groups (overlaps, duplicates, etc.)."""
 

@@ -97,3 +97,37 @@ Set dry_run: true to validate without executing."""
             "params": {"commands": commands, "dry_run": dry_run},
             "execute_client_side": True
         }
+
+
+@ToolRegistry.register
+class HelpTool(Tool):
+    """Get on-demand tool documentation."""
+
+    name = "help"
+    description = """Get on-demand tool documentation.
+
+Topics:
+- (none): List of all tools with one-line descriptions
+- Tool name (e.g., 'create_link'): Full documentation for that tool
+- Category (e.g., 'discovery', 'nodes', 'links', 'widgets', 'groups'): All tools in category
+- 'patterns': $ref system, multi-item syntax, inline groups
+- 'batch': Batch wrapper documentation
+
+Use this instead of guessing tool syntax."""
+
+    parameters = {
+        "type": "object",
+        "properties": {
+            "topic": {
+                "type": "string",
+                "description": "Tool name, category, or special topic (optional)"
+            }
+        }
+    }
+
+    async def execute(self, topic: str = None) -> Dict[str, Any]:
+        return {
+            "action": "help",
+            "params": {"topic": topic},
+            "execute_client_side": True
+        }
