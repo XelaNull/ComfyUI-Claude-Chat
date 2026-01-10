@@ -13,7 +13,7 @@ let protectedNodesManager = null;
 async function loadPromptGuardModules() {
     if (!promptGuardUI) {
         try {
-            const uiModule = await import('./lib/prompt_guard_ui.js');
+            const uiModule = await import('./prompt_guard_ui.js');
             promptGuardUI = uiModule.promptGuardUI;
         } catch (e) {
             console.warn('[Settings] Could not load promptGuardUI:', e);
@@ -21,7 +21,7 @@ async function loadPromptGuardModules() {
     }
     if (!protectedNodesManager) {
         try {
-            const managerModule = await import('./lib/prompt_guard_manager.js');
+            const managerModule = await import('./prompt_guard_manager.js');
             protectedNodesManager = managerModule.protectedNodesManager;
         } catch (e) {
             console.warn('[Settings] Could not load protectedNodesManager:', e);

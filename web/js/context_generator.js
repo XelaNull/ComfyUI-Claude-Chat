@@ -22,7 +22,7 @@ let protectedNodesManager = null;
 async function getProtectedNodesManager() {
     if (!protectedNodesManager) {
         try {
-            const module = await import("./lib/prompt_guard_manager.js");
+            const module = await import("./prompt_guard_manager.js");
             protectedNodesManager = module.protectedNodesManager;
         } catch (e) {
             console.warn('[ContextGenerator] Could not load protectedNodesManager:', e);

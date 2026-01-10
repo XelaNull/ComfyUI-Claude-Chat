@@ -24,7 +24,7 @@ let PROMPT_WIDGET_NAMES = ['text', 'prompt', 'positive', 'negative', 'string']; 
 async function loadPromptGuardModules() {
     if (!protectedNodesManager) {
         try {
-            const managerModule = await import('./lib/prompt_guard_manager.js');
+            const managerModule = await import('./prompt_guard_manager.js');
             protectedNodesManager = managerModule.protectedNodesManager;
         } catch (e) {
             console.warn('[Claude Chat] Could not load protectedNodesManager:', e);
@@ -32,7 +32,7 @@ async function loadPromptGuardModules() {
     }
     if (!promptGuardCanvas) {
         try {
-            const canvasModule = await import('./lib/prompt_guard_canvas.js');
+            const canvasModule = await import('./prompt_guard_canvas.js');
             promptGuardCanvas = canvasModule.promptGuardCanvas;
         } catch (e) {
             console.warn('[Claude Chat] Could not load promptGuardCanvas:', e);
