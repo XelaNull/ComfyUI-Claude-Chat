@@ -76,8 +76,8 @@ class ClaudeChatPanel {
         // Workflow modification mode
         this.workflowModeEnabled = false;
 
-        // Prompt Guard - hides prompt text from Claude
-        this.promptGuardEnabled = localStorage.getItem('claude-chat-prompt-guard') === 'true';
+        // Prompt Guard - hides prompt text from Claude (ENABLED by default)
+        this.promptGuardEnabled = localStorage.getItem('claude-chat-prompt-guard') !== 'false';
         // Initialize canvas visual indicators for prompt guard (lazy load)
         if (this.promptGuardEnabled) {
             loadPromptGuardModules().then(({ promptGuardCanvas }) => {
