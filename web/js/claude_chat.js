@@ -1295,8 +1295,12 @@ class ClaudeChatPanel {
 
         if (this.isResizing) {
             e.preventDefault();
-            this.width = Math.max(320, pos.x - this.panel.offsetLeft);
-            this.height = Math.max(400, pos.y - this.panel.offsetTop);
+            // Allow smaller dimensions on mobile
+            const isMobile = this.panel?.dataset?.mobile === 'true';
+            const minWidth = isMobile ? 280 : 320;
+            const minHeight = isMobile ? 200 : 400;
+            this.width = Math.max(minWidth, pos.x - this.panel.offsetLeft);
+            this.height = Math.max(minHeight, pos.y - this.panel.offsetTop);
             this.panel.style.width = this.width + 'px';
             this.panel.style.height = this.height + 'px';
         }

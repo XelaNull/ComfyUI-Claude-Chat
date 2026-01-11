@@ -20,12 +20,12 @@ function isMobile() {
 export function createPanelDOM(chat) {
     const mobile = isMobile();
 
-    // On mobile, override dimensions to fit screen
+    // On mobile, override dimensions to fit screen (smaller default)
     if (mobile) {
         chat.x = 0;
         chat.y = 0;
         chat.width = window.innerWidth;
-        chat.height = window.innerHeight * 0.85;
+        chat.height = window.innerHeight * 0.5; // 50% of screen height
         // Note: currentFontSize is a getter, don't modify it directly
     }
 
@@ -38,7 +38,7 @@ export function createPanelDOM(chat) {
         top: ${chat.y}px;
         left: ${chat.x}px;
         width: ${mobile ? '100vw' : chat.width + 'px'};
-        height: ${mobile ? '85vh' : chat.height + 'px'};
+        height: ${mobile ? '50vh' : chat.height + 'px'};
         background: #1a1a2e;
         border: ${mobile ? 'none' : '1px solid #3a3a5a'};
         border-radius: ${mobile ? '0' : '12px'};
