@@ -18,7 +18,6 @@ import { TOOL_DOCS, TOOL_CATEGORIES, PATTERNS, COMMON_SLOTS, searchTools } from 
 // Prompt Guard modules - loaded lazily to avoid circular dependencies
 let protectedNodesManager = null;
 let promptGuardCanvas = null;
-let PROMPT_WIDGET_NAMES = ['text', 'prompt', 'positive', 'negative', 'string']; // Default fallback
 
 // Load prompt guard modules on demand (from lib/ subdirectory to avoid auto-loading)
 async function loadPromptGuardModules() {
@@ -480,35 +479,9 @@ class ClaudeChatPanel {
                     return enrichError('update_widget', 'No updates specified - provide node, widget, and value');
                 }
 
-                // Prompt Guard: Block updates to protected nodes
-                if (this.promptGuardEnabled) {
-                    for (const update of updates) {
-                        const nodeId = this.refResolver.resolve(update.node);
-
-                        // Use the ProtectedNodesManager to check if this node is protected (if loaded)
-                        if (protectedNodesManager && protectedNodesManager.isNodeProtected(nodeId)) {
-                            const node = app.graph?.getNodeById(nodeId);
-                            const nodeType = node?.type?.split('/').pop() || 'node';
-                            return {
-                                success: false,
-                                error: `Prompt Guard enabled - cannot modify protected node #${nodeId} (${nodeType})`,
-                                blocked_by: 'prompt_guard',
-                                node_id: nodeId
-                            };
-                        }
-
-                        // Also check widget names for non-protected nodes
-                        // (in case the widget itself is prompt-related but node wasn't detected)
-                        const widgetName = update.widget?.toLowerCase() || '';
-                        if (PROMPT_WIDGET_NAMES.some(pw => widgetName.includes(pw))) {
-                            return {
-                                success: false,
-                                error: `Prompt Guard enabled - cannot modify text/prompt widget "${update.widget}"`,
-                                blocked_by: 'prompt_guard'
-                            };
-                        }
-                    }
-                }
+                // Note: Prompt Guard only hides prompt text from Claude's view (via stripPromptData).
+                // It does NOT block modifications - Claude can still change settings on any node,
+                // it just can't see the current prompt values.
 
                 let updated = 0;
                 for (const update of updates) {
