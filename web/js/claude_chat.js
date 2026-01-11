@@ -1187,7 +1187,9 @@ class ClaudeChatPanel {
         const container = document.getElementById('claude-messages');
         if (container) {
             container.innerHTML = '';
-            this.addWelcomeMessage(container);
+            // Detect mobile for welcome message
+            const mobile = this.panel?.dataset?.mobile === 'true';
+            this.addWelcomeMessage(container, mobile);
         }
 
         // Clear the input field
@@ -1211,31 +1213,45 @@ class ClaudeChatPanel {
         createPanelDOM(this);
     }
 
-    addWelcomeMessage(container) {
+    addWelcomeMessage(container, mobile = false) {
         const msg = document.createElement('div');
         msg.style.cssText = `
-            padding: 16px;
+            padding: ${mobile ? '10px' : '16px'};
             background: linear-gradient(135deg, rgba(217,119,6,0.1) 0%, rgba(180,83,9,0.1) 100%);
-            border-radius: 8px;
+            border-radius: ${mobile ? '6px' : '8px'};
             border-left: 3px solid #D97706;
             font-size: inherit;
         `;
-        msg.innerHTML = `
-            <div style="font-weight: 600; color: #D97706; margin-bottom: 8px;">
-                Hi, I'm Claude by Anthropic!
-            </div>
-            <div style="color: #aaa; font-size: 0.9em; line-height: 1.5;">
-                I can help with your ComfyUI workflow. Try asking:
-                <ul style="margin: 8px 0 0 0; padding-left: 20px;">
-                    <li>Why is my image grainy?</li>
-                    <li>What CFG should I use for SDXL?</li>
-                    <li>Add a LoRA loader to my workflow</li>
-                </ul>
-            </div>
-            <div style="color: #666; font-size: 0.75em; margin-top: 12px; padding-top: 10px; border-top: 1px solid #3a3a5a; line-height: 1.4;">
-                🔒 <strong>Privacy:</strong> Conversations are sent to Anthropic's Claude API. Debug logging is <strong>disabled by default</strong> and can only be enabled by the server administrator via CLAUDE_CHAT_DEBUG=1.
-            </div>
-        `;
+
+        if (mobile) {
+            // Compact mobile welcome
+            msg.innerHTML = `
+                <div style="font-weight: 600; color: #D97706; margin-bottom: 4px; font-size: 13px;">
+                    Claude for ComfyUI
+                </div>
+                <div style="color: #aaa; font-size: 11px; line-height: 1.4;">
+                    Ask about your workflow, get tips, or enable <span style="color: #D97706;">Modify</span> mode to edit nodes.
+                </div>
+            `;
+        } else {
+            // Full desktop welcome
+            msg.innerHTML = `
+                <div style="font-weight: 600; color: #D97706; margin-bottom: 8px;">
+                    Hi, I'm Claude by Anthropic!
+                </div>
+                <div style="color: #aaa; font-size: 0.9em; line-height: 1.5;">
+                    I can help with your ComfyUI workflow. Try asking:
+                    <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+                        <li>Why is my image grainy?</li>
+                        <li>What CFG should I use for SDXL?</li>
+                        <li>Add a LoRA loader to my workflow</li>
+                    </ul>
+                </div>
+                <div style="color: #666; font-size: 0.75em; margin-top: 12px; padding-top: 10px; border-top: 1px solid #3a3a5a; line-height: 1.4;">
+                    🔒 <strong>Privacy:</strong> Conversations are sent to Anthropic's Claude API. Debug logging is <strong>disabled by default</strong> and can only be enabled by the server administrator via CLAUDE_CHAT_DEBUG=1.
+                </div>
+            `;
+        }
         container.appendChild(msg);
     }
 

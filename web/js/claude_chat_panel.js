@@ -6,28 +6,48 @@
  */
 
 /**
+ * Detect if running on mobile device
+ */
+function isMobile() {
+    return window.innerWidth <= 600 ||
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+/**
  * Create the chat panel DOM elements
  * @param {ClaudeChatPanel} chat - The chat panel instance
  */
 export function createPanelDOM(chat) {
+    const mobile = isMobile();
+
+    // On mobile, override dimensions to fit screen
+    if (mobile) {
+        chat.x = 0;
+        chat.y = 0;
+        chat.width = window.innerWidth;
+        chat.height = window.innerHeight * 0.85;
+        chat.currentFontSize = Math.max(12, chat.currentFontSize - 2);
+    }
+
     // Create main panel
     chat.panel = document.createElement('div');
     chat.panel.id = 'claude-chat-panel';
+    chat.panel.dataset.mobile = mobile ? 'true' : 'false';
     chat.panel.style.cssText = `
         position: fixed;
         top: ${chat.y}px;
         left: ${chat.x}px;
-        width: ${chat.width}px;
-        height: ${chat.height}px;
+        width: ${mobile ? '100vw' : chat.width + 'px'};
+        height: ${mobile ? '85vh' : chat.height + 'px'};
         background: #1a1a2e;
-        border: 1px solid #3a3a5a;
-        border-radius: 12px;
+        border: ${mobile ? 'none' : '1px solid #3a3a5a'};
+        border-radius: ${mobile ? '0' : '12px'};
         box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         display: flex;
         flex-direction: column;
         z-index: 10000;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        font-size: ${chat.currentFontSize}px;
+        font-size: ${mobile ? '13px' : chat.currentFontSize + 'px'};
         overflow: hidden;
         touch-action: none;
     `;
@@ -39,47 +59,83 @@ export function createPanelDOM(chat) {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 12px 16px;
+        padding: ${mobile ? '8px 12px' : '12px 16px'};
         background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
-        cursor: move;
+        cursor: ${mobile ? 'default' : 'move'};
         user-select: none;
         touch-action: none;
     `;
-    header.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <span style="color: white; font-weight: 600;">Claude Chat</span>
-            <span id="claude-status-badge" style="
-                font-size: 0.75em;
-                padding: 2px 6px;
-                border-radius: 10px;
-                background: rgba(255,255,255,0.2);
-                color: white;
-            ">${chat.authMethod}</span>
-            <span id="claude-prompt-guard-indicator" title="Prompt Guard Active - Your prompts are hidden from Claude" style="
-                display: ${chat.promptGuardEnabled ? 'inline-flex' : 'none'};
-                align-items: center;
-                gap: 5px;
-                padding: 3px 10px 3px 8px;
-                margin-left: 4px;
-                border-radius: 12px;
-                background: rgba(255, 255, 255, 0.95);
-                box-shadow: 0 1px 3px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.5);
-                font-size: 10px;
-                font-weight: 600;
-                letter-spacing: 0.5px;
-                text-transform: uppercase;
-                color: #1e3a5f;
-            ">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="#1e3a5f" stroke="none">
-                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 3.18l6 2.67v4.15c0 4.15-2.88 8.03-6 9.18-3.12-1.15-6-5.03-6-9.18V6.85l6-2.67zm-1 5.82v6h2v-6h-2zm0-4v2h2V6h-2z"/>
+
+    if (mobile) {
+        // Compact mobile header
+        header.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 </svg>
-                <span>Guarded</span>
-            </span>
-        </div>
-    `;
+                <span style="color: white; font-weight: 600; font-size: 14px;">Claude</span>
+                <span id="claude-status-badge" style="
+                    font-size: 10px;
+                    padding: 2px 5px;
+                    border-radius: 8px;
+                    background: rgba(255,255,255,0.2);
+                    color: white;
+                ">${chat.authMethod}</span>
+                <span id="claude-prompt-guard-indicator" title="Prompt Guard" style="
+                    display: ${chat.promptGuardEnabled ? 'inline-flex' : 'none'};
+                    align-items: center;
+                    padding: 2px 6px;
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.9);
+                    font-size: 9px;
+                    font-weight: 600;
+                    color: #1e3a5f;
+                ">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="#1e3a5f" stroke="none" style="margin-right: 3px;">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                    </svg>
+                    PG
+                </span>
+            </div>
+        `;
+    } else {
+        // Desktop header
+        header.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span style="color: white; font-weight: 600;">Claude Chat</span>
+                <span id="claude-status-badge" style="
+                    font-size: 0.75em;
+                    padding: 2px 6px;
+                    border-radius: 10px;
+                    background: rgba(255,255,255,0.2);
+                    color: white;
+                ">${chat.authMethod}</span>
+                <span id="claude-prompt-guard-indicator" title="Prompt Guard Active - Your prompts are hidden from Claude" style="
+                    display: ${chat.promptGuardEnabled ? 'inline-flex' : 'none'};
+                    align-items: center;
+                    gap: 5px;
+                    padding: 3px 10px 3px 8px;
+                    margin-left: 4px;
+                    border-radius: 12px;
+                    background: rgba(255, 255, 255, 0.95);
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.5);
+                    font-size: 10px;
+                    font-weight: 600;
+                    letter-spacing: 0.5px;
+                    text-transform: uppercase;
+                    color: #1e3a5f;
+                ">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="#1e3a5f" stroke="none">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 3.18l6 2.67v4.15c0 4.15-2.88 8.03-6 9.18-3.12-1.15-6-5.03-6-9.18V6.85l6-2.67zm-1 5.82v6h2v-6h-2zm0-4v2h2V6h-2z"/>
+                    </svg>
+                    <span>Guarded</span>
+                </span>
+            </div>
+        `;
+    }
 
     // Header buttons container
     const headerButtons = document.createElement('div');
@@ -149,19 +205,19 @@ export function createPanelDOM(chat) {
     messagesContainer.style.cssText = `
         flex: 1;
         overflow-y: auto;
-        padding: 16px;
+        padding: ${mobile ? '10px' : '16px'};
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: ${mobile ? '8px' : '12px'};
         -webkit-overflow-scrolling: touch;
         font-size: inherit;
     `;
 
-    // Welcome message
-    chat.addWelcomeMessage(messagesContainer);
+    // Welcome message (pass mobile flag)
+    chat.addWelcomeMessage(messagesContainer, mobile);
 
     // Input area
-    const inputArea = createInputArea(chat);
+    const inputArea = createInputArea(chat, mobile);
 
     // Resize handle
     const resizeHandle = document.createElement('div');
@@ -226,10 +282,10 @@ function createHeaderButton(iconHtml, title, onClick) {
 /**
  * Create the input area with textarea, send button, and options
  */
-function createInputArea(chat) {
+function createInputArea(chat, mobile = false) {
     const inputArea = document.createElement('div');
     inputArea.style.cssText = `
-        padding: 12px;
+        padding: ${mobile ? '8px' : '12px'};
         border-top: 1px solid #3a3a5a;
         background: #16162a;
     `;
@@ -237,23 +293,23 @@ function createInputArea(chat) {
     const inputWrapper = document.createElement('div');
     inputWrapper.style.cssText = `
         display: flex;
-        gap: 8px;
+        gap: ${mobile ? '6px' : '8px'};
     `;
 
     const textarea = document.createElement('textarea');
     textarea.id = 'claude-input';
-    textarea.placeholder = 'Ask about your workflow...';
+    textarea.placeholder = mobile ? 'Ask...' : 'Ask about your workflow...';
     textarea.style.cssText = `
         flex: 1;
-        padding: 10px 14px;
+        padding: ${mobile ? '8px 10px' : '10px 14px'};
         border: 1px solid #3a3a5a;
-        border-radius: 8px;
+        border-radius: ${mobile ? '6px' : '8px'};
         background: #1a1a2e;
         color: #e0e0e0;
-        font-size: inherit;
+        font-size: ${mobile ? '14px' : 'inherit'};
         resize: none;
-        min-height: 44px;
-        max-height: 120px;
+        min-height: ${mobile ? '38px' : '44px'};
+        max-height: ${mobile ? '80px' : '120px'};
         font-family: inherit;
     `;
     textarea.onkeydown = (e) => {
@@ -264,29 +320,29 @@ function createInputArea(chat) {
     };
     textarea.oninput = () => {
         textarea.style.height = 'auto';
-        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        textarea.style.height = Math.min(textarea.scrollHeight, mobile ? 80 : 120) + 'px';
     };
 
     const sendBtn = document.createElement('button');
     sendBtn.id = 'claude-send-btn';
     sendBtn.innerHTML = `
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="${mobile ? '18' : '20'}" height="${mobile ? '18' : '20'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="22" y1="2" x2="11" y2="13"></line>
             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
         </svg>
     `;
     sendBtn.style.cssText = `
-        padding: 12px 16px;
+        padding: ${mobile ? '10px 12px' : '12px 16px'};
         background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
         border: none;
-        border-radius: 8px;
+        border-radius: ${mobile ? '6px' : '8px'};
         color: white;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.2s;
-        min-width: 50px;
+        min-width: ${mobile ? '44px' : '50px'};
     `;
     sendBtn.onclick = () => chat.sendMessage();
 
@@ -295,7 +351,7 @@ function createInputArea(chat) {
     inputArea.appendChild(inputWrapper);
 
     // Options row
-    const optionsRow = createOptionsRow(chat);
+    const optionsRow = createOptionsRow(chat, mobile);
     inputArea.appendChild(optionsRow);
 
     return inputArea;
@@ -304,13 +360,13 @@ function createInputArea(chat) {
 /**
  * Create the options row with checkboxes and font size button
  */
-function createOptionsRow(chat) {
+function createOptionsRow(chat, mobile = false) {
     const optionsRow = document.createElement('div');
     optionsRow.style.cssText = `
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-top: 8px;
+        margin-top: ${mobile ? '6px' : '8px'};
     `;
 
     // Checkboxes container
@@ -318,16 +374,17 @@ function createOptionsRow(chat) {
     checkboxContainer.style.cssText = `
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: ${mobile ? '8px' : '12px'};
     `;
 
     // Workflow checkbox
-    const workflowOption = createCheckboxOption('Workflow', 'claude-include-workflow', true);
+    const workflowOption = createCheckboxOption(mobile ? 'WF' : 'Workflow', 'claude-include-workflow', true, false, mobile);
+    workflowOption.title = 'Include workflow context';
 
     // Image checkbox
     const isMaxPlanOnly = chat.authPreference === 'max';
     const canUseImages = !isMaxPlanOnly && chat.hasApiKey;
-    const imageOption = createCheckboxOption('Last image', 'claude-include-image', false, !canUseImages);
+    const imageOption = createCheckboxOption(mobile ? 'Img' : 'Last image', 'claude-include-image', false, !canUseImages, mobile);
     imageOption.id = 'claude-image-option';
     imageOption.style.opacity = canUseImages ? '1' : '0.5';
     if (isMaxPlanOnly) {
@@ -343,14 +400,14 @@ function createOptionsRow(chat) {
     workflowModeOption.style.cssText = `
         display: flex;
         align-items: center;
-        gap: 6px;
-        font-size: 0.85em;
+        gap: ${mobile ? '4px' : '6px'};
+        font-size: ${mobile ? '0.75em' : '0.85em'};
         color: #888;
         cursor: pointer;
     `;
     workflowModeOption.innerHTML = `
-        <input type="checkbox" id="claude-workflow-mode" style="cursor: pointer; width: 14px; height: 14px;">
-        <span style="color: #D97706;">Modify</span>
+        <input type="checkbox" id="claude-workflow-mode" style="cursor: pointer; width: ${mobile ? '12px' : '14px'}; height: ${mobile ? '12px' : '14px'};">
+        <span style="color: #D97706;">${mobile ? 'Mod' : 'Modify'}</span>
     `;
     workflowModeOption.title = 'Enable workflow modification mode - Claude can add/remove/connect nodes';
 
@@ -358,34 +415,36 @@ function createOptionsRow(chat) {
     checkboxContainer.appendChild(imageOption);
     checkboxContainer.appendChild(workflowModeOption);
 
-    // Font size button
-    const fontSizeBtn = document.createElement('button');
-    fontSizeBtn.id = 'claude-font-size-btn';
-    fontSizeBtn.innerHTML = '<span style="font-size:0.7em">A</span><span style="font-size:0.9em">A</span><span style="font-size:1.1em">A</span>';
-    fontSizeBtn.title = 'Change font size';
-    fontSizeBtn.style.cssText = `
-        background: #252540;
-        border: 1px solid #3a3a5a;
-        border-radius: 6px;
-        color: #888;
-        cursor: pointer;
-        padding: 4px 10px;
-        font-size: 0.85em;
-        font-weight: 600;
-        transition: all 0.2s;
-    `;
-    fontSizeBtn.onmouseenter = () => {
-        fontSizeBtn.style.background = '#3a3a5a';
-        fontSizeBtn.style.color = '#fff';
-    };
-    fontSizeBtn.onmouseleave = () => {
-        fontSizeBtn.style.background = '#252540';
-        fontSizeBtn.style.color = '#888';
-    };
-    fontSizeBtn.onclick = () => chat.cycleFontSize();
+    // Font size button (hide on mobile to save space)
+    if (!mobile) {
+        const fontSizeBtn = document.createElement('button');
+        fontSizeBtn.id = 'claude-font-size-btn';
+        fontSizeBtn.innerHTML = '<span style="font-size:0.7em">A</span><span style="font-size:0.9em">A</span><span style="font-size:1.1em">A</span>';
+        fontSizeBtn.title = 'Change font size';
+        fontSizeBtn.style.cssText = `
+            background: #252540;
+            border: 1px solid #3a3a5a;
+            border-radius: 6px;
+            color: #888;
+            cursor: pointer;
+            padding: 4px 10px;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: all 0.2s;
+        `;
+        fontSizeBtn.onmouseenter = () => {
+            fontSizeBtn.style.background = '#3a3a5a';
+            fontSizeBtn.style.color = '#fff';
+        };
+        fontSizeBtn.onmouseleave = () => {
+            fontSizeBtn.style.background = '#252540';
+            fontSizeBtn.style.color = '#888';
+        };
+        fontSizeBtn.onclick = () => chat.cycleFontSize();
+        optionsRow.appendChild(fontSizeBtn);
+    }
 
-    optionsRow.appendChild(checkboxContainer);
-    optionsRow.appendChild(fontSizeBtn);
+    optionsRow.insertBefore(checkboxContainer, optionsRow.firstChild);
 
     return optionsRow;
 }
@@ -393,18 +452,18 @@ function createOptionsRow(chat) {
 /**
  * Create a checkbox option label
  */
-function createCheckboxOption(label, id, checked = false, disabled = false) {
+function createCheckboxOption(label, id, checked = false, disabled = false, mobile = false) {
     const option = document.createElement('label');
     option.style.cssText = `
         display: flex;
         align-items: center;
-        gap: 6px;
-        font-size: 0.85em;
+        gap: ${mobile ? '4px' : '6px'};
+        font-size: ${mobile ? '0.75em' : '0.85em'};
         color: #888;
         cursor: pointer;
     `;
     option.innerHTML = `
-        <input type="checkbox" id="${id}" ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''} style="cursor: pointer; width: 14px; height: 14px;">
+        <input type="checkbox" id="${id}" ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''} style="cursor: pointer; width: ${mobile ? '12px' : '14px'}; height: ${mobile ? '12px' : '14px'};">
         ${label}
     `;
     return option;
