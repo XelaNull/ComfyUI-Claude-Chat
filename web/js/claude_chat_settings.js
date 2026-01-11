@@ -10,6 +10,15 @@
 let promptGuardUI = null;
 let protectedNodesManager = null;
 
+/**
+ * Detect if running on mobile device
+ * @returns {boolean}
+ */
+function isMobile() {
+    return window.innerWidth <= 600 ||
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
 async function loadPromptGuardModules() {
     if (!promptGuardUI) {
         try {
@@ -73,39 +82,49 @@ export async function openSettingsModal(chat) {
         z-index: 10001;
     `;
 
+    // Check if mobile
+    const mobile = isMobile();
+
     // Modal content
     const content = document.createElement('div');
     content.style.cssText = `
         background: #1a1a2e;
         border: 1px solid #3a3a5a;
-        border-radius: 12px;
-        width: 480px;
-        max-width: 90vw;
+        border-radius: ${mobile ? '8px' : '12px'};
+        width: ${mobile ? '95vw' : '480px'};
+        max-width: 95vw;
+        max-height: ${mobile ? '85vh' : '90vh'};
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
     `;
 
     // Modal header
-    const header = createModalHeader(() => modal.remove());
+    const header = createModalHeader(() => modal.remove(), mobile);
 
-    // Modal body
+    // Modal body - scrollable
     const body = document.createElement('div');
-    body.style.cssText = 'padding: 20px;';
+    body.style.cssText = `
+        padding: ${mobile ? '12px' : '20px'};
+        overflow-y: auto;
+        flex: 1;
+    `;
 
     // Status section
-    const statusSection = createStatusSection(status);
+    const statusSection = createStatusSection(status, mobile);
 
     // Auth preference section
-    const authSection = createAuthSection(savedPreference);
+    const authSection = createAuthSection(savedPreference, mobile);
 
     // API Key section
-    const apiKeySection = createApiKeySection(savedApiKey);
+    const apiKeySection = createApiKeySection(savedApiKey, mobile);
 
     // Prompt Guard section
-    const promptGuardSection = createPromptGuardSection();
+    const promptGuardSection = createPromptGuardSection(mobile);
 
     // Save button
-    const saveBtn = createSaveButton(chat, modal);
+    const saveBtn = createSaveButton(chat, modal, mobile);
 
     // Assemble modal
     body.appendChild(statusSection);
@@ -131,17 +150,18 @@ export async function openSettingsModal(chat) {
 /**
  * Create modal header with close button
  */
-function createModalHeader(onClose) {
+function createModalHeader(onClose, mobile = false) {
     const header = document.createElement('div');
     header.style.cssText = `
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 16px 20px;
+        padding: ${mobile ? '10px 12px' : '16px 20px'};
         background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+        flex-shrink: 0;
     `;
     header.innerHTML = `
-        <span style="color: white; font-weight: 600; font-size: 16px;">Settings</span>
+        <span style="color: white; font-weight: 600; font-size: ${mobile ? '14px' : '16px'};">Settings</span>
     `;
 
     const closeBtn = document.createElement('button');
@@ -150,7 +170,7 @@ function createModalHeader(onClose) {
         background: none;
         border: none;
         color: white;
-        font-size: 24px;
+        font-size: ${mobile ? '20px' : '24px'};
         cursor: pointer;
         padding: 0 4px;
         line-height: 1;
@@ -165,25 +185,27 @@ function createModalHeader(onClose) {
 /**
  * Create status display section
  */
-function createStatusSection(status) {
+function createStatusSection(status, mobile = false) {
     const section = document.createElement('div');
     section.style.cssText = `
-        margin-bottom: 20px;
-        padding: 12px;
+        margin-bottom: ${mobile ? '12px' : '20px'};
+        padding: ${mobile ? '8px 10px' : '12px'};
         background: #252540;
-        border-radius: 8px;
+        border-radius: ${mobile ? '6px' : '8px'};
     `;
 
-    const statusLabel = status.auth_method === 'max_plan' ? 'Max Plan (Claude CLI)' :
-                       status.auth_method === 'anthropic_api' ? 'Anthropic API' :
-                       status.auth_method === 'max_plan_no_cli' ? 'Max Plan (CLI Missing)' : 'Not Connected';
+    const statusLabel = status.auth_method === 'max_plan' ? (mobile ? 'Max Plan' : 'Max Plan (Claude CLI)') :
+                       status.auth_method === 'anthropic_api' ? 'API Key' :
+                       status.auth_method === 'max_plan_no_cli' ? 'CLI Missing' : 'Not Connected';
     const statusColor = status.auth_method === 'max_plan' || status.auth_method === 'anthropic_api' ? '#22c55e' : '#ef4444';
 
     section.innerHTML = `
-        <div style="font-size: 12px; color: #888; margin-bottom: 4px;">Current Status</div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="width: 8px; height: 8px; border-radius: 50%; background: ${statusColor};"></span>
-            <span style="color: #e0e0e0; font-weight: 500;">${statusLabel}</span>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: ${mobile ? '10px' : '12px'}; color: #888;">Status</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: ${statusColor};"></span>
+                <span style="color: #e0e0e0; font-weight: 500; font-size: ${mobile ? '11px' : '13px'};">${statusLabel}</span>
+            </div>
         </div>
     `;
 
@@ -193,17 +215,21 @@ function createStatusSection(status) {
 /**
  * Create authentication preference section
  */
-function createAuthSection(savedPreference) {
+function createAuthSection(savedPreference, mobile = false) {
     const section = document.createElement('div');
-    section.style.cssText = 'margin-bottom: 20px;';
+    section.style.cssText = `margin-bottom: ${mobile ? '12px' : '20px'};`;
     section.innerHTML = `
-        <div style="font-size: 14px; color: #e0e0e0; font-weight: 500; margin-bottom: 12px;">Authentication Method</div>
+        <div style="font-size: ${mobile ? '12px' : '14px'}; color: #e0e0e0; font-weight: 500; margin-bottom: ${mobile ? '8px' : '12px'};">Auth Method</div>
     `;
 
-    const options = [
-        { value: 'auto', label: 'Auto (Recommended)', desc: 'Max Plan for chat, API Key for image analysis. Falls back to API if Max Plan unavailable.' },
-        { value: 'api', label: 'Anthropic API Only', desc: 'Always use API key for all requests' },
-        { value: 'max', label: 'Max Plan Only', desc: 'No image analysis (Last Image disabled)' }
+    const options = mobile ? [
+        { value: 'auto', label: 'Auto', desc: 'Best of both' },
+        { value: 'api', label: 'API Only', desc: 'Use API key' },
+        { value: 'max', label: 'Max Only', desc: 'No images' }
+    ] : [
+        { value: 'auto', label: 'Auto (Recommended)', desc: 'Max Plan for chat, API Key for images' },
+        { value: 'api', label: 'Anthropic API Only', desc: 'Always use API key' },
+        { value: 'max', label: 'Max Plan Only', desc: 'No image analysis' }
     ];
 
     options.forEach(opt => {
@@ -211,23 +237,23 @@ function createAuthSection(savedPreference) {
         const isSelected = savedPreference === opt.value;
         optDiv.style.cssText = `
             display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 10px 12px;
-            margin-bottom: 8px;
+            align-items: center;
+            gap: ${mobile ? '8px' : '10px'};
+            padding: ${mobile ? '8px 10px' : '10px 12px'};
+            margin-bottom: ${mobile ? '6px' : '8px'};
             background: ${isSelected ? 'rgba(217, 119, 6, 0.15)' : '#16162a'};
             border: 1px solid ${isSelected ? '#D97706' : '#3a3a5a'};
-            border-radius: 8px;
+            border-radius: ${mobile ? '6px' : '8px'};
             cursor: pointer;
             transition: all 0.2s;
         `;
         optDiv.innerHTML = `
             <input type="radio" name="claude-auth-pref" value="${opt.value}"
                 ${isSelected ? 'checked' : ''}
-                style="margin-top: 2px; cursor: pointer;">
-            <div>
-                <div style="color: #e0e0e0; font-size: 13px;">${opt.label}</div>
-                <div style="color: #888; font-size: 11px;">${opt.desc}</div>
+                style="margin: 0; cursor: pointer; flex-shrink: 0;">
+            <div style="min-width: 0;">
+                <div style="color: #e0e0e0; font-size: ${mobile ? '11px' : '13px'};">${opt.label}</div>
+                <div style="color: #888; font-size: ${mobile ? '9px' : '11px'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${opt.desc}</div>
             </div>
         `;
         optDiv.onmouseenter = () => {
@@ -245,26 +271,26 @@ function createAuthSection(savedPreference) {
 /**
  * Create API key input section
  */
-function createApiKeySection(savedApiKey) {
+function createApiKeySection(savedApiKey, mobile = false) {
     const section = document.createElement('div');
-    section.style.cssText = 'margin-bottom: 20px;';
+    section.style.cssText = `margin-bottom: ${mobile ? '12px' : '20px'};`;
     section.innerHTML = `
-        <div style="font-size: 14px; color: #e0e0e0; font-weight: 500; margin-bottom: 8px;">Anthropic API Key</div>
+        <div style="font-size: ${mobile ? '12px' : '14px'}; color: #e0e0e0; font-weight: 500; margin-bottom: ${mobile ? '6px' : '8px'};">API Key</div>
         <div style="position: relative;">
             <input type="password" id="claude-api-key-input" value="${savedApiKey}" placeholder="sk-ant-..." style="
                 width: 100%;
-                padding: 10px 40px 10px 12px;
+                padding: ${mobile ? '8px 36px 8px 10px' : '10px 40px 10px 12px'};
                 background: #16162a;
                 border: 1px solid #3a3a5a;
-                border-radius: 8px;
+                border-radius: ${mobile ? '6px' : '8px'};
                 color: #e0e0e0;
-                font-size: 13px;
+                font-size: ${mobile ? '11px' : '13px'};
                 font-family: monospace;
                 box-sizing: border-box;
             ">
             <button id="claude-toggle-key-visibility" style="
                 position: absolute;
-                right: 8px;
+                right: 6px;
                 top: 50%;
                 transform: translateY(-50%);
                 background: none;
@@ -273,15 +299,15 @@ function createApiKeySection(savedApiKey) {
                 cursor: pointer;
                 padding: 4px;
             ">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="${mobile ? '14' : '16'}" height="${mobile ? '14' : '16'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                     <circle cx="12" cy="12" r="3"></circle>
                 </svg>
             </button>
         </div>
-        <div style="font-size: 11px; color: #888; margin-top: 6px;">
-            Get your API key from <a href="https://console.anthropic.com" target="_blank" style="color: #D97706;">console.anthropic.com</a>
-        </div>
+        ${mobile ? '' : `<div style="font-size: 11px; color: #888; margin-top: 6px;">
+            Get key from <a href="https://console.anthropic.com" target="_blank" style="color: #D97706;">console.anthropic.com</a>
+        </div>`}
     `;
 
     return section;
@@ -290,214 +316,240 @@ function createApiKeySection(savedApiKey) {
 /**
  * Create Prompt Guard section - Premium privacy control
  */
-function createPromptGuardSection() {
-    const savedPromptGuard = localStorage.getItem('claude-chat-prompt-guard') === 'true';
+function createPromptGuardSection(mobile = false) {
+    const savedPromptGuard = localStorage.getItem('claude-chat-prompt-guard') !== 'false';
 
     const section = document.createElement('div');
     section.id = 'prompt-guard-section';
     section.style.cssText = `
-        margin-bottom: 20px;
+        margin-bottom: ${mobile ? '12px' : '20px'};
         padding: 0;
         background: linear-gradient(135deg, #1a2744 0%, #0f1a2e 100%);
-        border-radius: 12px;
+        border-radius: ${mobile ? '8px' : '12px'};
         border: 1px solid ${savedPromptGuard ? '#3b82f6' : '#2a3f5f'};
         overflow: hidden;
         transition: border-color 0.3s ease, box-shadow 0.3s ease;
         ${savedPromptGuard ? 'box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);' : ''}
     `;
 
-    section.innerHTML = `
-        <!-- Header bar with gradient -->
-        <div style="
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 16px;
-            background: linear-gradient(90deg, rgba(59, 130, 246, ${savedPromptGuard ? '0.2' : '0.08'}) 0%, transparent 100%);
-            border-bottom: 1px solid rgba(59, 130, 246, 0.1);
-        ">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <!-- Shield icon container -->
-                <div id="prompt-guard-icon-container" style="
+    // Mobile-optimized compact layout
+    if (mobile) {
+        section.innerHTML = `
+            <!-- Compact header -->
+            <div style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                background: linear-gradient(90deg, rgba(59, 130, 246, ${savedPromptGuard ? '0.2' : '0.08'}) 0%, transparent 100%);
+            ">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div id="prompt-guard-icon-container" style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 6px;
+                        background: ${savedPromptGuard
+                            ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
+                            : 'linear-gradient(135deg, #374151 0%, #1f2937 100%)'};
+                        transition: all 0.3s ease;
+                    ">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="white" stroke="none">
+                            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: #f1f5f9; font-weight: 600;">Prompt Guard</div>
+                        <div id="prompt-guard-status" style="font-size: 9px; color: ${savedPromptGuard ? '#60a5fa' : '#64748b'};">
+                            ${savedPromptGuard ? '● ON' : '○ OFF'}
+                        </div>
+                    </div>
+                </div>
+                <!-- Compact toggle -->
+                <label style="position: relative; display: inline-block; width: 40px; height: 22px; cursor: pointer;">
+                    <input type="checkbox" id="claude-prompt-guard-toggle" ${savedPromptGuard ? 'checked' : ''} style="opacity: 0; width: 0; height: 0;">
+                    <span id="prompt-guard-track" style="
+                        position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+                        background: ${savedPromptGuard ? '#3b82f6' : '#374151'};
+                        border-radius: 22px; transition: all 0.3s;
+                    "></span>
+                    <span id="prompt-guard-knob" style="
+                        position: absolute; height: 18px; width: 18px;
+                        left: ${savedPromptGuard ? '20px' : '2px'}; top: 2px;
+                        background: white; border-radius: 50%; transition: all 0.3s;
+                    "></span>
+                    <span id="prompt-guard-knob-icon" style="
+                        position: absolute; left: ${savedPromptGuard ? '23px' : '5px'}; top: 5px;
+                        font-size: 8px; transition: all 0.3s;
+                    ">${savedPromptGuard ? '🔒' : '🔓'}</span>
+                </label>
+            </div>
+            <!-- Compact manage button -->
+            <button id="prompt-guard-manage-btn" style="
+                width: calc(100% - 16px); margin: 8px;
+                padding: 8px; background: rgba(59, 130, 246, 0.15);
+                border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 6px;
+                color: #93c5fd; font-size: 10px; cursor: pointer;
+                display: flex; align-items: center; justify-content: center; gap: 6px;
+            ">
+                Manage <span id="prompt-guard-count" style="background: rgba(59,130,246,0.3); padding: 1px 5px; border-radius: 3px; font-size: 9px;">0</span>
+            </button>
+        `;
+    } else {
+        section.innerHTML = `
+            <!-- Header bar with gradient -->
+            <div style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 14px 16px;
+                background: linear-gradient(90deg, rgba(59, 130, 246, ${savedPromptGuard ? '0.2' : '0.08'}) 0%, transparent 100%);
+                border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+            ">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <!-- Shield icon container -->
+                    <div id="prompt-guard-icon-container" style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 8px;
+                        background: ${savedPromptGuard
+                            ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
+                            : 'linear-gradient(135deg, #374151 0%, #1f2937 100%)'};
+                        box-shadow: ${savedPromptGuard
+                            ? '0 2px 8px rgba(59, 130, 246, 0.4)'
+                            : '0 2px 4px rgba(0,0,0,0.2)'};
+                        transition: all 0.3s ease;
+                    ">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none">
+                            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 3.18l6 2.67v4.15c0 4.15-2.88 8.03-6 9.18-3.12-1.15-6-5.03-6-9.18V6.85l6-2.67z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; color: #f1f5f9; font-weight: 600; letter-spacing: 0.3px;">
+                            Prompt Guard
+                        </div>
+                        <div id="prompt-guard-status" style="
+                            font-size: 10px;
+                            font-weight: 500;
+                            letter-spacing: 0.5px;
+                            text-transform: uppercase;
+                            color: ${savedPromptGuard ? '#60a5fa' : '#64748b'};
+                            transition: color 0.3s ease;
+                        ">
+                            ${savedPromptGuard ? '● Protected' : '○ Disabled'}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Premium toggle switch -->
+                <label style="position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer;">
+                    <input type="checkbox" id="claude-prompt-guard-toggle" ${savedPromptGuard ? 'checked' : ''} style="opacity: 0; width: 0; height: 0;">
+                    <!-- Track -->
+                    <span id="prompt-guard-track" style="
+                        position: absolute;
+                        cursor: pointer;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: ${savedPromptGuard
+                            ? 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)'
+                            : 'linear-gradient(90deg, #374151 0%, #1f2937 100%)'};
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        border-radius: 28px;
+                        border: 1px solid ${savedPromptGuard ? '#60a5fa' : '#4b5563'};
+                        box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+                    "></span>
+                    <!-- Knob -->
+                    <span id="prompt-guard-knob" style="
+                        position: absolute;
+                        content: '';
+                        height: 22px;
+                        width: 22px;
+                        left: ${savedPromptGuard ? '27px' : '3px'};
+                        top: 3px;
+                        background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        border-radius: 50%;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.8);
+                    "></span>
+                    <!-- Knob icon -->
+                    <span id="prompt-guard-knob-icon" style="
+                        position: absolute;
+                        left: ${savedPromptGuard ? '31px' : '7px'};
+                        top: 7px;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        font-size: 10px;
+                        line-height: 1;
+                    ">${savedPromptGuard ? '🔒' : '🔓'}</span>
+                </label>
+            </div>
+
+            <!-- Description area -->
+            <div style="padding: 12px 16px 14px;">
+                <div style="
+                    font-size: 11.5px;
+                    color: #94a3b8;
+                    line-height: 1.5;
+                    margin-bottom: 10px;
+                ">
+                    Privacy mode that <strong style="color: #cbd5e1;">hides prompt text</strong> from Claude.
+                </div>
+
+                <!-- Feature pills -->
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <span style="
+                        display: inline-flex; align-items: center; gap: 4px;
+                        padding: 4px 8px; background: rgba(59, 130, 246, 0.1);
+                        border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 6px;
+                        font-size: 10px; color: #93c5fd;
+                    "><span style="font-size: 9px;">📝</span> Hidden</span>
+                    <span style="
+                        display: inline-flex; align-items: center; gap: 4px;
+                        padding: 4px 8px; background: rgba(34, 197, 94, 0.1);
+                        border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 6px;
+                        font-size: 10px; color: #86efac;
+                    "><span style="font-size: 9px;">🤖</span> Auto</span>
+                </div>
+
+                <!-- Manage Protected Nodes Button -->
+                <button id="prompt-guard-manage-btn" style="
+                    margin-top: 12px;
+                    width: 100%;
+                    padding: 10px 16px;
+                    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(29, 78, 216, 0.2) 100%);
+                    border: 1px solid rgba(59, 130, 246, 0.3);
+                    border-radius: 8px;
+                    color: #93c5fd;
+                    font-size: 12px;
+                    font-weight: 500;
+                    cursor: pointer;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 8px;
-                    background: ${savedPromptGuard
-                        ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
-                        : 'linear-gradient(135deg, #374151 0%, #1f2937 100%)'};
-                    box-shadow: ${savedPromptGuard
-                        ? '0 2px 8px rgba(59, 130, 246, 0.4)'
-                        : '0 2px 4px rgba(0,0,0,0.2)'};
-                    transition: all 0.3s ease;
+                    gap: 8px;
+                    transition: all 0.2s;
                 ">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none">
-                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 3.18l6 2.67v4.15c0 4.15-2.88 8.03-6 9.18-3.12-1.15-6-5.03-6-9.18V6.85l6-2.67z"/>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                     </svg>
-                </div>
-                <div>
-                    <div style="font-size: 13px; color: #f1f5f9; font-weight: 600; letter-spacing: 0.3px;">
-                        Prompt Guard
-                    </div>
-                    <div id="prompt-guard-status" style="
+                    Manage Protected Nodes
+                    <span id="prompt-guard-count" style="
+                        background: rgba(59, 130, 246, 0.3);
+                        padding: 2px 6px;
+                        border-radius: 4px;
                         font-size: 10px;
-                        font-weight: 500;
-                        letter-spacing: 0.5px;
-                        text-transform: uppercase;
-                        color: ${savedPromptGuard ? '#60a5fa' : '#64748b'};
-                        transition: color 0.3s ease;
-                    ">
-                        ${savedPromptGuard ? '● Protected' : '○ Disabled'}
-                    </div>
-                </div>
+                    ">0</span>
+                </button>
             </div>
-
-            <!-- Premium toggle switch -->
-            <label style="position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer;">
-                <input type="checkbox" id="claude-prompt-guard-toggle" ${savedPromptGuard ? 'checked' : ''} style="opacity: 0; width: 0; height: 0;">
-                <!-- Track -->
-                <span id="prompt-guard-track" style="
-                    position: absolute;
-                    cursor: pointer;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: ${savedPromptGuard
-                        ? 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)'
-                        : 'linear-gradient(90deg, #374151 0%, #1f2937 100%)'};
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    border-radius: 28px;
-                    border: 1px solid ${savedPromptGuard ? '#60a5fa' : '#4b5563'};
-                    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
-                "></span>
-                <!-- Knob -->
-                <span id="prompt-guard-knob" style="
-                    position: absolute;
-                    content: '';
-                    height: 22px;
-                    width: 22px;
-                    left: ${savedPromptGuard ? '27px' : '3px'};
-                    top: 3px;
-                    background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    border-radius: 50%;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.8);
-                "></span>
-                <!-- Knob icon -->
-                <span id="prompt-guard-knob-icon" style="
-                    position: absolute;
-                    left: ${savedPromptGuard ? '31px' : '7px'};
-                    top: 7px;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    font-size: 10px;
-                    line-height: 1;
-                ">${savedPromptGuard ? '🔒' : '🔓'}</span>
-            </label>
-        </div>
-
-        <!-- Description area -->
-        <div style="padding: 12px 16px 14px;">
-            <div style="
-                font-size: 11.5px;
-                color: #94a3b8;
-                line-height: 1.5;
-                margin-bottom: 10px;
-            ">
-                Privacy mode that <strong style="color: #cbd5e1;">hides all prompt text</strong> from Claude.
-                Your creative ideas stay private while Claude can still help with workflow structure.
-            </div>
-
-            <!-- Feature pills -->
-            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                <span style="
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 4px;
-                    padding: 4px 8px;
-                    background: rgba(59, 130, 246, 0.1);
-                    border: 1px solid rgba(59, 130, 246, 0.2);
-                    border-radius: 6px;
-                    font-size: 10px;
-                    color: #93c5fd;
-                ">
-                    <span style="font-size: 9px;">📝</span> Text hidden
-                </span>
-                <span style="
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 4px;
-                    padding: 4px 8px;
-                    background: rgba(59, 130, 246, 0.1);
-                    border: 1px solid rgba(59, 130, 246, 0.2);
-                    border-radius: 6px;
-                    font-size: 10px;
-                    color: #93c5fd;
-                ">
-                    <span style="font-size: 9px;">🛡️</span> Edit blocked
-                </span>
-                <span style="
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 4px;
-                    padding: 4px 8px;
-                    background: rgba(59, 130, 246, 0.1);
-                    border: 1px solid rgba(59, 130, 246, 0.2);
-                    border-radius: 6px;
-                    font-size: 10px;
-                    color: #93c5fd;
-                ">
-                    <span style="font-size: 9px;">💾</span> Persisted
-                </span>
-                <span style="
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 4px;
-                    padding: 4px 8px;
-                    background: rgba(34, 197, 94, 0.1);
-                    border: 1px solid rgba(34, 197, 94, 0.2);
-                    border-radius: 6px;
-                    font-size: 10px;
-                    color: #86efac;
-                ">
-                    <span style="font-size: 9px;">🤖</span> Auto-detect
-                </span>
-            </div>
-
-            <!-- Manage Protected Nodes Button -->
-            <button id="prompt-guard-manage-btn" style="
-                margin-top: 12px;
-                width: 100%;
-                padding: 10px 16px;
-                background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(29, 78, 216, 0.2) 100%);
-                border: 1px solid rgba(59, 130, 246, 0.3);
-                border-radius: 8px;
-                color: #93c5fd;
-                font-size: 12px;
-                font-weight: 500;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                transition: all 0.2s;
-            ">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 20h9"></path>
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                </svg>
-                Manage Protected Nodes
-                <span id="prompt-guard-count" style="
-                    background: rgba(59, 130, 246, 0.3);
-                    padding: 2px 6px;
-                    border-radius: 4px;
-                    font-size: 10px;
-                ">0</span>
-            </button>
-        </div>
-    `;
+        `;
+    }
 
     // Add interactive toggle functionality with animations
     setTimeout(() => {
@@ -512,27 +564,45 @@ function createPromptGuardSection() {
                 const status = document.getElementById('prompt-guard-status');
                 const sectionEl = document.getElementById('prompt-guard-section');
 
-                // Update track
-                track.style.background = isEnabled
-                    ? 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)'
-                    : 'linear-gradient(90deg, #374151 0%, #1f2937 100%)';
-                track.style.borderColor = isEnabled ? '#60a5fa' : '#4b5563';
+                // Detect mobile for correct toggle positions
+                const isMobileNow = isMobile();
 
-                // Update knob position and icon
-                knob.style.left = isEnabled ? '27px' : '3px';
-                knobIcon.style.left = isEnabled ? '31px' : '7px';
+                // Update track
+                if (isMobileNow) {
+                    track.style.background = isEnabled ? '#3b82f6' : '#374151';
+                } else {
+                    track.style.background = isEnabled
+                        ? 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)'
+                        : 'linear-gradient(90deg, #374151 0%, #1f2937 100%)';
+                    track.style.borderColor = isEnabled ? '#60a5fa' : '#4b5563';
+                }
+
+                // Update knob position and icon (different sizes for mobile vs desktop)
+                if (isMobileNow) {
+                    knob.style.left = isEnabled ? '20px' : '2px';
+                    knobIcon.style.left = isEnabled ? '23px' : '5px';
+                } else {
+                    knob.style.left = isEnabled ? '27px' : '3px';
+                    knobIcon.style.left = isEnabled ? '31px' : '7px';
+                }
                 knobIcon.textContent = isEnabled ? '🔒' : '🔓';
 
-                // Update icon container
-                iconContainer.style.background = isEnabled
-                    ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
-                    : 'linear-gradient(135deg, #374151 0%, #1f2937 100%)';
-                iconContainer.style.boxShadow = isEnabled
-                    ? '0 2px 8px rgba(59, 130, 246, 0.4)'
-                    : '0 2px 4px rgba(0,0,0,0.2)';
+                // Update icon container (if present - not on mobile compact)
+                if (iconContainer) {
+                    iconContainer.style.background = isEnabled
+                        ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
+                        : 'linear-gradient(135deg, #374151 0%, #1f2937 100%)';
+                    iconContainer.style.boxShadow = isEnabled
+                        ? '0 2px 8px rgba(59, 130, 246, 0.4)'
+                        : '0 2px 4px rgba(0,0,0,0.2)';
+                }
 
                 // Update status text
-                status.textContent = isEnabled ? '● Protected' : '○ Disabled';
+                if (isMobileNow) {
+                    status.textContent = isEnabled ? '● ON' : '○ OFF';
+                } else {
+                    status.textContent = isEnabled ? '● Protected' : '○ Disabled';
+                }
                 status.style.color = isEnabled ? '#60a5fa' : '#64748b';
 
                 // Update section border and glow
@@ -583,17 +653,17 @@ function createPromptGuardSection() {
 /**
  * Create save button
  */
-function createSaveButton(chat, modal) {
+function createSaveButton(chat, modal, mobile = false) {
     const saveBtn = document.createElement('button');
-    saveBtn.textContent = 'Save Settings';
+    saveBtn.textContent = mobile ? 'Save' : 'Save Settings';
     saveBtn.style.cssText = `
         width: 100%;
-        padding: 12px;
+        padding: ${mobile ? '10px' : '12px'};
         background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
         border: none;
-        border-radius: 8px;
+        border-radius: ${mobile ? '6px' : '8px'};
         color: white;
-        font-size: 14px;
+        font-size: ${mobile ? '12px' : '14px'};
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s;
