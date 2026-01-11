@@ -26,7 +26,7 @@ export function createPanelDOM(chat) {
         chat.y = 0;
         chat.width = window.innerWidth;
         chat.height = window.innerHeight * 0.85;
-        chat.currentFontSize = Math.max(12, chat.currentFontSize - 2);
+        // Note: currentFontSize is a getter, don't modify it directly
     }
 
     // Create main panel
