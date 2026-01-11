@@ -18,6 +18,7 @@ import { TOOL_DOCS, TOOL_CATEGORIES, PATTERNS, COMMON_SLOTS, searchTools } from 
 // Prompt Guard modules - loaded lazily to avoid circular dependencies
 let protectedNodesManager = null;
 let promptGuardCanvas = null;
+let PROMPT_WIDGET_NAMES = null;
 
 // Load prompt guard modules on demand (from lib/ subdirectory to avoid auto-loading)
 async function loadPromptGuardModules() {
@@ -37,7 +38,16 @@ async function loadPromptGuardModules() {
             console.warn('[Claude Chat] Could not load promptGuardCanvas:', e);
         }
     }
-    return { protectedNodesManager, promptGuardCanvas };
+    if (!PROMPT_WIDGET_NAMES) {
+        try {
+            const detectorModule = await import('./prompt_guard_detector.js');
+            PROMPT_WIDGET_NAMES = detectorModule.PROMPT_WIDGET_NAMES;
+        } catch (e) {
+            // Fallback to common prompt widget names
+            PROMPT_WIDGET_NAMES = ['text', 'prompt', 'positive', 'negative', 'string'];
+        }
+    }
+    return { protectedNodesManager, promptGuardCanvas, PROMPT_WIDGET_NAMES };
 }
 
 class ClaudeChatPanel {
@@ -479,9 +489,37 @@ class ClaudeChatPanel {
                     return enrichError('update_widget', 'No updates specified - provide node, widget, and value');
                 }
 
-                // Note: Prompt Guard only hides prompt text from Claude's view (via stripPromptData).
-                // It does NOT block modifications - Claude can still change settings on any node,
-                // it just can't see the current prompt values.
+                // Prompt Guard: Block modifications to prompt widgets on protected nodes
+                // This allows changing other settings (like guide_size, feather, etc.) while
+                // protecting the actual prompt text widgets (positive, negative, text, etc.)
+                if (this.promptGuardEnabled && protectedNodesManager) {
+                    // Get prompt widget names (use fallback if not loaded)
+                    const promptWidgets = PROMPT_WIDGET_NAMES || ['text', 'prompt', 'positive', 'negative', 'string'];
+
+                    for (const update of updates) {
+                        const nodeId = this.refResolver.resolve(update.node);
+
+                        // Only check protected nodes
+                        if (protectedNodesManager.isNodeProtected(nodeId)) {
+                            const widgetName = (update.widget || '').toLowerCase();
+
+                            // Check if this widget is a prompt-related widget
+                            const isPromptWidget = promptWidgets.some(pw => widgetName.includes(pw.toLowerCase()));
+
+                            if (isPromptWidget) {
+                                const node = app.graph?.getNodeById(nodeId);
+                                const nodeType = node?.type?.split('/').pop() || 'node';
+                                return {
+                                    success: false,
+                                    error: `Prompt Guard: Cannot modify prompt widget "${update.widget}" on protected node #${nodeId} (${nodeType}). Other settings can still be changed.`,
+                                    blocked_by: 'prompt_guard',
+                                    node_id: nodeId,
+                                    widget: update.widget
+                                };
+                            }
+                        }
+                    }
+                }
 
                 let updated = 0;
                 for (const update of updates) {
